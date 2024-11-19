@@ -1,0 +1,53 @@
+chargers:
+
+- name: tessiecharger
+
+#REPLACE VIN with your vin
+#REPLACE TOKEN with your token
+  type: custom
+  power:
+      source: http
+      uri: https://api.tessie.com/VIN/state?use_cache=true
+      headers:
+        Authorization: Bearer TOKEN      
+      jq: .charge_state.charger_power * 1000
+      cache: 60s
+  energy:
+    source: http
+    uri: https://api.tessie.com/VIN/state?use_cache=true
+    headers:
+      Authorization: Bearer TOKEN
+    cache: 60s 
+    jq: .charge_state.charge_energy_added
+  status:
+    source: http
+    cache: 60s
+    uri: https://api.tessie.com/VIN/state?use_cache=true
+    headers:
+      Authorization: Bearer TOKEN
+    jq: |
+      if .charge_state.charging_state == "Charging" then "C"
+      elif .charge_state.charging_state == "Complete" then "D"
+      elif .charge_state.charge_port_door_close then "B"
+      else "A"  
+      end
+  enabled:
+    source: http
+    uri: https://api.tessie.com/VIN/state?use_cache=true
+    headers:
+      Authorization: Bearer TOKEN
+    jq: .charge_state.charging_state == "Charging"
+    cache: 60s
+  maxcurrent:
+    source: http
+    uri: https://api.tessie.com/VIN/command/set_charging_amps?retry_duration=40&wait_for_completion=true&amps=${maxcurrent}
+    headers:
+      Authorization: Bearer TOKEN
+    method: POST
+
+  enable: # set charger enabled state 
+    source: http
+    uri: https://api.tessie.com/VIN/command/{{ if .enable }}start{{ else }}stop{{ end }}_charging?retry_duration=40&wait_for_completion=true
+    headers:
+      Authorization: Bearer TOKEN
+    method: POST 
