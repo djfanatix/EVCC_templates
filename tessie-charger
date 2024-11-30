@@ -1,9 +1,9 @@
-chargers:
+  chargers:
   - name: tessiecharger
 
     # REPLACE VIN with your VIN
     # REPLACE TOKEN with your token
-    # REPLACE LAT and LON with your location's latitude and longitude (optional)
+    # REPLACE {{ .lat }} and {{ .lon }} with your location's latitude and longitude
     type: custom
     power:
       source: http
@@ -11,8 +11,7 @@ chargers:
       headers:
         Authorization: Bearer TOKEN
       jq: |
-        if "{{ .location }}" == "always" or
-           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+        if ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
            ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
           .charge_state.charger_power * 1000
         else
@@ -25,8 +24,7 @@ chargers:
       headers:
         Authorization: Bearer TOKEN
       jq: |
-        if "{{ .location }}" == "always" or
-           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+        if ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
            ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
           .charge_state.charge_energy_added
         else
@@ -40,8 +38,7 @@ chargers:
       headers:
         Authorization: Bearer TOKEN
       jq: |
-        if "{{ .location }}" == "always" or
-           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+        if ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
            ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
           if .charge_state.charging_state == "Charging" then "C"
           elif .charge_state.charging_state == "Complete" then "D"
@@ -57,8 +54,7 @@ chargers:
       headers:
         Authorization: Bearer TOKEN
       jq: |
-        if "{{ .location }}" == "always" or
-           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+        if ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
            ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
           .charge_state.charging_state == "Charging"
         else
