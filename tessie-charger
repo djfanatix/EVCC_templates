@@ -1,0 +1,79 @@
+chargers:
+  - name: tessiecharger
+
+    # REPLACE VIN with your VIN
+    # REPLACE TOKEN with your token
+    # REPLACE LAT and LON with your location's latitude and longitude (optional)
+    type: custom
+    power:
+      source: http
+      uri: https://api.tessie.com/VIN/state?use_cache=true
+      headers:
+        Authorization: Bearer TOKEN
+      jq: |
+        if "{{ .location }}" == "always" or
+           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+           ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
+          .charge_state.charger_power * 1000
+        else
+          0
+        end
+      cache: 60s
+    energy:
+      source: http
+      uri: https://api.tessie.com/VIN/state?use_cache=true
+      headers:
+        Authorization: Bearer TOKEN
+      jq: |
+        if "{{ .location }}" == "always" or
+           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+           ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
+          .charge_state.charge_energy_added
+        else
+          0
+        end
+      cache: 60s
+    status:
+      source: http
+      cache: 60s
+      uri: https://api.tessie.com/VIN/state?use_cache=true
+      headers:
+        Authorization: Bearer TOKEN
+      jq: |
+        if "{{ .location }}" == "always" or
+           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+           ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
+          if .charge_state.charging_state == "Charging" then "C"
+          elif .charge_state.charging_state == "Complete" then "D"
+          elif .charge_state.charge_port_door_open then "B"
+          else "A"
+          end
+        else
+          "A"
+        end
+    enabled:
+      source: http
+      uri: https://api.tessie.com/VIN/state?use_cache=true
+      headers:
+        Authorization: Bearer TOKEN
+      jq: |
+        if "{{ .location }}" == "always" or
+           ((.drive_state.latitude - {{ .lat }} | abs) < 0.001) and
+           ((.drive_state.longitude - {{ .lon }} | abs) < 0.001) then
+          .charge_state.charging_state == "Charging"
+        else
+          false
+        end
+      cache: 60s
+    maxcurrent:
+      source: http
+      uri: https://api.tessie.com/VIN/command/set_charging_amps?retry_duration=40&wait_for_completion=true&amps=${maxcurrent}
+      headers:
+        Authorization: Bearer TOKEN
+      method: POST
+    enable:
+      source: http
+      uri: https://api.tessie.com/VIN/command/{{ if .enable }}start{{ else }}stop{{ end }}_charging?retry_duration=40&wait_for_completion=true
+      headers:
+        Authorization: Bearer TOKEN
+      method: POST
